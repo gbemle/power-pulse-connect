@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -133,7 +132,6 @@ const Map = () => {
     };
   }, [tokenSubmitted, mapboxToken]);
 
-  // Handle My Location button
   const handleLocateMe = () => {
     if (!map.current || !mapLoaded) return;
     
@@ -175,7 +173,6 @@ const Map = () => {
     }
   };
 
-  // Handle report outage
   const handleReportOutage = () => {
     toast.info("Reporting outage...", {
       description: "We've received your outage report and will investigate."
@@ -228,7 +225,7 @@ const Map = () => {
             </Card>
           ) : (
             <div className="border rounded-md overflow-hidden aspect-video bg-muted/30 relative">
-              <style jsx global>{`
+              <style>{`
                 .mapboxgl-ctrl-logo, .mapboxgl-ctrl-attrib {
                   display: none !important;
                 }
