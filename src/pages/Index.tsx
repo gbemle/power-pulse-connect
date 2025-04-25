@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { MapPin, Battery, AlertCircle, ChartBar } from "lucide-react";
+import { MapPin, Battery, AlertCircle, ChartBar, CreditCard, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Index = () => {

@@ -47,7 +47,7 @@ const Sidebar = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton active={isActive('/')} asChild>
+                <SidebarMenuButton isActive={isActive('/')} asChild>
                   <Link to="/">
                     <Home className="h-5 w-5" />
                     <span>Home</span>
@@ -55,7 +55,7 @@ const Sidebar = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton active={isActive('/map')} asChild>
+                <SidebarMenuButton isActive={isActive('/map')} asChild>
                   <Link to="/map">
                     <Map className="h-5 w-5" />
                     <span>Power Map</span>
@@ -63,7 +63,7 @@ const Sidebar = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton active={isActive('/messages')} asChild>
+                <SidebarMenuButton isActive={isActive('/messages')} asChild>
                   <Link to="/messages">
                     <MessageCircle className="h-5 w-5" />
                     <span>Messages</span>
@@ -72,7 +72,7 @@ const Sidebar = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton active={isActive('/notifications')} asChild>
+                <SidebarMenuButton isActive={isActive('/notifications')} asChild>
                   <Link to="/notifications">
                     <Bell className="h-5 w-5" />
                     <span>Notifications</span>
@@ -88,7 +88,7 @@ const Sidebar = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton active={isActive('/payments')} asChild>
+                <SidebarMenuButton isActive={isActive('/payments')} asChild>
                   <Link to="/payments">
                     <CreditCard className="h-5 w-5" />
                     <span>Bill Payments</span>
@@ -96,7 +96,7 @@ const Sidebar = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton active={isActive('/profile')} asChild>
+                <SidebarMenuButton isActive={isActive('/profile')} asChild>
                   <Link to="/profile">
                     <UserPen className="h-5 w-5" />
                     <span>Update Profile</span>
@@ -104,7 +104,7 @@ const Sidebar = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton active={isActive('/reports')} asChild>
+                <SidebarMenuButton isActive={isActive('/reports')} asChild>
                   <Link to="/reports">
                     <FileText className="h-5 w-5" />
                     <span>Reports</span>
@@ -112,7 +112,7 @@ const Sidebar = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton active={isActive('/downloads')} asChild>
+                <SidebarMenuButton isActive={isActive('/downloads')} asChild>
                   <Link to="/downloads">
                     <Download className="h-5 w-5" />
                     <span>Downloads</span>
@@ -128,7 +128,7 @@ const Sidebar = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton active={isActive('/settings')} asChild>
+                <SidebarMenuButton isActive={isActive('/settings')} asChild>
                   <Link to="/settings">
                     <Settings className="h-5 w-5" />
                     <span>Settings</span>
@@ -136,7 +136,7 @@ const Sidebar = () => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton active={isActive('/admin')} asChild>
+                <SidebarMenuButton isActive={isActive('/admin')} asChild>
                   <Link to="/admin">
                     <Users className="h-5 w-5" />
                     <span>Admin Panel</span>
