@@ -1,13 +1,186 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Battery, AlertCircle, MessageCircle, Clock } from 'lucide-react';
+import { MapPin, Battery, AlertCircle, MessageCircle, Clock, Navigation, Power, Compass } from 'lucide-react';
+import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+
+// Locations data
+const powerLocations = {
+  available: [
+    { name: "Ikeja GRA", hours: "10h+", lat: 6.5758, lng: 3.3573 },
+    { name: "Lekki Phase 1", hours: "8h+", lat: 6.4698, lng: 3.5852 },
+    { name: "Victoria Island", hours: "12h+", lat: 6.4281, lng: 3.4208 },
+    { name: "Maryland", hours: "5h+", lat: 6.5712, lng: 3.3705 },
+    { name: "Opebi", hours: "7h+", lat: 6.5888, lng: 3.3596 },
+    { name: "Allen Avenue", hours: "9h+", lat: 6.6011, lng: 3.3572 },
+    { name: "Magodo", hours: "6h+", lat: 6.6167, lng: 3.3819 }
+  ],
+  outages: [
+    { name: "Surulere", hours: "4h+", lat: 6.5059, lng: 3.3509 },
+    { name: "Ikorodu", hours: "6h+", lat: 6.6194, lng: 3.5105 },
+    { name: "Ajah", hours: "2h+", lat: 6.4698, lng: 3.5683 },
+    { name: "Ilupeju", hours: "3h+", lat: 6.5526, lng: 3.3573 },
+    { name: "Ojota", hours: "5h+", lat: 6.5830, lng: 3.3778 }
+  ],
+  maintenance: [
+    { name: "Yaba", time: "Tomorrow, 9AM-2PM", lat: 6.5172, lng: 3.3855 },
+    { name: "Maryland", time: "Fri, 10AM-1PM", lat: 6.5712, lng: 3.3705 },
+    { name: "Festac", time: "Sat, 8AM-12PM", lat: 6.4698, lng: 3.2683 }
+  ]
+};
 
 const Map = () => {
   const [activeTab, setActiveTab] = useState('map');
+  const [mapboxToken, setMapboxToken] = useState('');
+  const [tokenSubmitted, setTokenSubmitted] = useState(false);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  
+  const handleTokenSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mapboxToken.trim()) {
+      setTokenSubmitted(true);
+      toast.success("Mapbox token added", {
+        description: "Map will be loaded with your token"
+      });
+    } else {
+      toast.error("Please enter a valid token");
+    }
+  };
+
+  useEffect(() => {
+    if (!tokenSubmitted || !mapContainer.current) return;
+
+    mapboxgl.accessToken = mapboxToken;
+    
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: [3.3792, 6.5244], // Lagos coordinates
+        zoom: 10
+      });
+
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+      map.current.on('load', () => {
+        setMapLoaded(true);
+
+        // Add markers for available power
+        powerLocations.available.forEach(location => {
+          const el = document.createElement('div');
+          el.className = 'power-marker available';
+          el.innerHTML = '<div class="w-4 h-4 rounded-full bg-green-500"></div>';
+          
+          new mapboxgl.Marker({ element: el })
+            .setLngLat([location.lng, location.lat])
+            .setPopup(
+              new mapboxgl.Popup({ offset: 25 })
+                .setHTML(`<h3>${location.name}</h3><p>Power Available: ${location.hours}</p>`)
+            )
+            .addTo(map.current!);
+        });
+
+        // Add markers for outages
+        powerLocations.outages.forEach(location => {
+          const el = document.createElement('div');
+          el.className = 'power-marker outage';
+          el.innerHTML = '<div class="w-4 h-4 rounded-full bg-red-500"></div>';
+          
+          new mapboxgl.Marker({ element: el })
+            .setLngLat([location.lng, location.lat])
+            .setPopup(
+              new mapboxgl.Popup({ offset: 25 })
+                .setHTML(`<h3>${location.name}</h3><p>Outage Duration: ${location.hours}</p>`)
+            )
+            .addTo(map.current!);
+        });
+
+        // Add markers for maintenance
+        powerLocations.maintenance.forEach(location => {
+          const el = document.createElement('div');
+          el.className = 'power-marker maintenance';
+          el.innerHTML = '<div class="w-4 h-4 rounded-full bg-amber-500"></div>';
+          
+          new mapboxgl.Marker({ element: el })
+            .setLngLat([location.lng, location.lat])
+            .setPopup(
+              new mapboxgl.Popup({ offset: 25 })
+                .setHTML(`<h3>${location.name}</h3><p>Maintenance: ${location.time}</p>`)
+            )
+            .addTo(map.current!);
+        });
+      });
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      toast.error("Failed to load map", {
+        description: "Please check your Mapbox token and try again"
+      });
+      setTokenSubmitted(false);
+    }
+
+    return () => {
+      if (map.current) {
+        map.current.remove();
+      }
+    };
+  }, [tokenSubmitted, mapboxToken]);
+
+  // Handle My Location button
+  const handleLocateMe = () => {
+    if (!map.current || !mapLoaded) return;
+    
+    if (navigator.geolocation) {
+      toast.info("Finding your location...");
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          map.current!.flyTo({
+            center: [longitude, latitude],
+            zoom: 14,
+            essential: true
+          });
+
+          // Add user location marker
+          const el = document.createElement('div');
+          el.className = 'user-marker';
+          el.innerHTML = '<div class="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center"><span class="text-white text-xs">YOU</span></div>';
+
+          new mapboxgl.Marker({ element: el })
+            .setLngLat([longitude, latitude])
+            .addTo(map.current!);
+          
+          toast.success("Location found", {
+            description: "Map centered to your current location"
+          });
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          toast.error("Could not find your location", {
+            description: "Please allow location access and try again"
+          });
+        }
+      );
+    } else {
+      toast.error("Geolocation not supported by your browser");
+    }
+  };
+
+  // Handle report outage
+  const handleReportOutage = () => {
+    toast.info("Reporting outage...", {
+      description: "We've received your outage report and will investigate."
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -27,19 +200,76 @@ const Map = () => {
         </TabsList>
         
         <TabsContent value="map" className="space-y-4">
-          <div className="border rounded-md overflow-hidden aspect-video bg-muted/30 relative">
-            <div className="absolute inset-0 flex items-center justify-center flex-col gap-2">
-              <MapPin className="h-10 w-10 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Interactive map will be rendered here</p>
+          {!tokenSubmitted ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Map Configuration</CardTitle>
+                <CardDescription>Enter your Mapbox token to view the interactive map</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleTokenSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="mapbox-token" className="text-sm font-medium">Mapbox Token</label>
+                    <Input 
+                      id="mapbox-token"
+                      type="text"
+                      placeholder="Enter your Mapbox public token"
+                      value={mapboxToken}
+                      onChange={(e) => setMapboxToken(e.target.value)}
+                      className="w-full"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Get your token at <a href="https://mapbox.com/" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">https://mapbox.com/</a>
+                    </p>
+                  </div>
+                  <Button type="submit">Load Map</Button>
+                </form>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="border rounded-md overflow-hidden aspect-video bg-muted/30 relative">
+              <style jsx global>{`
+                .mapboxgl-ctrl-logo, .mapboxgl-ctrl-attrib {
+                  display: none !important;
+                }
+                .power-marker, .user-marker {
+                  cursor: pointer;
+                }
+              `}</style>
+              <div ref={mapContainer} className="absolute inset-0" />
+              
+              <div className="absolute top-4 left-4 flex flex-col gap-2">
+                <div className="bg-card/90 backdrop-blur-sm p-2 rounded-md shadow-sm">
+                  <h3 className="text-sm font-medium mb-2">Legend</h3>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <span className="text-xs">Power Available</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <span className="text-xs">Power Outage</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                      <span className="text-xs">Scheduled Maintenance</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="absolute bottom-4 right-4 flex gap-2">
+                <Button size="sm" variant="secondary" onClick={handleReportOutage}>
+                  <AlertCircle className="mr-2 h-4 w-4" />
+                  Report Outage
+                </Button>
+                <Button size="sm" variant="secondary" onClick={handleLocateMe}>
+                  <Navigation className="mr-2 h-4 w-4" />
+                  Mark My Location
+                </Button>
+              </div>
             </div>
-            
-            <div className="absolute bottom-4 right-4">
-              <Button size="sm" variant="secondary">
-                <MapPin className="mr-2 h-4 w-4" />
-                Mark My Location
-              </Button>
-            </div>
-          </div>
+          )}
           
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/20">
@@ -49,21 +279,13 @@ const Map = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-power-green" />
-                    <span>Ikeja GRA</span>
-                    <Badge className="ml-auto bg-power-green border-0">10h+</Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-power-green" />
-                    <span>Lekki Phase 1</span>
-                    <Badge className="ml-auto bg-power-green border-0">8h+</Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-power-green" />
-                    <span>Victoria Island</span>
-                    <Badge className="ml-auto bg-power-green border-0">12h+</Badge>
-                  </div>
+                  {powerLocations.available.slice(0, 3).map(location => (
+                    <div key={location.name} className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-power-green" />
+                      <span>{location.name}</span>
+                      <Badge className="ml-auto bg-power-green border-0">{location.hours}</Badge>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -75,21 +297,13 @@ const Map = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-red-500" />
-                    <span>Surulere</span>
-                    <Badge variant="outline" className="ml-auto text-red-500">4h+</Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-red-500" />
-                    <span>Ikorodu</span>
-                    <Badge variant="outline" className="ml-auto text-red-500">6h+</Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-red-500" />
-                    <span>Ajah</span>
-                    <Badge variant="outline" className="ml-auto text-red-500">2h+</Badge>
-                  </div>
+                  {powerLocations.outages.slice(0, 3).map(location => (
+                    <div key={location.name} className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-red-500" />
+                      <span>{location.name}</span>
+                      <Badge variant="outline" className="ml-auto text-red-500">{location.hours}</Badge>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -101,18 +315,12 @@ const Map = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-amber-500" />
-                    <span>Yaba - Tomorrow, 9AM-2PM</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-amber-500" />
-                    <span>Maryland - Fri, 10AM-1PM</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-amber-500" />
-                    <span>Festac - Sat, 8AM-12PM</span>
-                  </div>
+                  {powerLocations.maintenance.map(location => (
+                    <div key={location.name} className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-amber-500" />
+                      <span>{location.name} - {location.time}</span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
